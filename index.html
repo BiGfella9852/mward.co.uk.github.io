@@ -46,6 +46,8 @@
     button { width: 100%; background: var(--accent); color: #0f172a; font-weight: 600; padding: 0.85rem; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; transition: background 0.2s; margin-top: 0.5rem; }
     button:hover { background: var(--accent-hover); }
 
+    .form-result { margin-top: 1rem; text-align: center; font-weight: 500; font-size: 0.95rem; display: none; }
+
     /* Footer & Quick Links */
     footer { text-align: center; color: var(--text-muted); font-size: 0.875rem; }
     .links { display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 1rem; }
@@ -78,7 +80,7 @@
 
     <main class="card">
       <h2>Get in Touch</h2>
-      <form action="https://api.web3forms.com/submit" method="POST">
+      <form id="contact-form" action="https://api.web3forms.com/submit" method="POST">
         <!-- Web3Forms Access Key -->
         <input type="hidden" name="access_key" value="6c36d2f1-d9b1-4b45-ab67-9b2a9a095f49">
         <input type="hidden" name="subject" value="New Contact Form Submission - mward.co.uk">
@@ -102,6 +104,7 @@
         </div>
 
         <button type="submit">Send Message</button>
+        <div id="result" class="form-result"></div>
       </form>
     </main>
 
@@ -114,5 +117,44 @@
     </footer>
   </div>
 
+  <script>
+    const form = document.getElementById('contact-form');
+    const result = document.getElementById('result');
+
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const formData = new FormData(form);
+      const object = Object.fromEntries(formData);
+      const json = JSON.stringify(object);
+
+      result.style.display = "block";
+      result.style.color = "var(--accent)";
+      result.innerHTML = "Sending message...";
+
+      fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: json
+      })
+      .then(async (response) => {
+        let resJson = await response.json();
+        if (response.status == 200) {
+          result.style.color = "#22c55e"; // Green success color
+          result.innerHTML = "Thank you! Your message has been sent successfully.";
+          form.reset();
+        } else {
+          result.style.color = "#ef4444"; // Red error color
+          result.innerHTML = resJson.message || "Something went wrong. Please try again.";
+        }
+      })
+      .catch(error => {
+        result.style.color = "#ef4444";
+        result.innerHTML = "Something went wrong. Please try again.";
+      });
+    });
+  </script>
 </body>
 </html>
