@@ -21,8 +21,18 @@
     body { background-color: var(--bg); color: var(--text-main); line-height: 1.6; display: flex; justify-content: center; min-height: 100vh; padding: 2rem 1rem; }
     .container { max-width: 680px; width: 100%; }
 
-    /* Header & Bio */
+    /* Header, Bio & Avatar */
     header { margin-bottom: 2rem; }
+    .profile-img {
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      border: 2px solid var(--accent);
+      object-fit: cover;
+      margin-bottom: 1.25rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      display: block;
+    }
     .status-badge { display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(56, 189, 248, 0.1); color: var(--accent); padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.85rem; font-weight: 500; margin-bottom: 1rem; border: 1px solid rgba(56, 189, 248, 0.2); }
     .status-dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; display: inline-block; }
     h1 { font-size: 2.25rem; font-weight: 700; color: var(--text-main); letter-spacing: -0.025em; }
@@ -59,6 +69,9 @@
 
   <div class="container">
     <header>
+      <!-- Headshot Avatar -->
+      <img src="profile.jpg" alt="Matt Ward" class="profile-img">
+
       <div class="status-badge">
         <span class="status-dot"></span> Available for Advisory & Consulting
       </div>
@@ -142,11 +155,11 @@
       .then(async (response) => {
         let resJson = await response.json();
         if (response.status == 200) {
-          result.style.color = "#22c55e"; // Green success color
+          result.style.color = "#22c55e";
           result.innerHTML = "Thank you! Your message has been sent successfully.";
           form.reset();
         } else {
-          result.style.color = "#ef4444"; // Red error color
+          result.style.color = "#ef4444";
           result.innerHTML = resJson.message || "Something went wrong. Please try again.";
         }
       })
