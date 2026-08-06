@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Matt Ward | Technical Presales & Enterprise Solution Architecture</title>
-  <meta name="description" content="Technical Presales Leader, Enterprise Solution Architect, Hybrid Cloud & Data Strategy Specialist.">
+  <title>Matt Ward | Enterprise Solution Architect & Technical Presales Specialist</title>
+  <meta name="description" content="Solution Architect and Technical Presales Specialist with over 20 years' experience in hybrid cloud, cyber resilience, and enterprise IT.">
 
   <style>
     :root {
@@ -19,7 +19,7 @@
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
     body { background-color: var(--bg); color: var(--text-main); line-height: 1.6; display: flex; justify-content: center; min-height: 100vh; padding: 2rem 1rem; }
-    .container { max-width: 680px; width: 100%; }
+    .container { max-width: 720px; width: 100%; }
 
     /* Header, Bio & Avatar */
     header { margin-bottom: 2rem; }
@@ -37,11 +37,19 @@
     .status-dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; display: inline-block; }
     h1 { font-size: 2.25rem; font-weight: 700; color: var(--text-main); letter-spacing: -0.025em; }
     .subtitle { font-size: 1.1rem; color: var(--accent); font-weight: 500; margin-bottom: 0.75rem; }
-    .bio { color: var(--text-muted); font-size: 0.975rem; }
+    .bio { color: var(--text-muted); font-size: 0.975rem; line-height: 1.7; }
 
-    /* Tech Stack Badges */
+    /* Skill Tags */
     .skills { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1.5rem 0 2.5rem 0; }
     .skill-tag { background: var(--card-bg); color: var(--text-main); border: 1px solid var(--border); padding: 0.35rem 0.75rem; border-radius: 6px; font-size: 0.85rem; font-weight: 500; }
+
+    /* Hands-On Lab Section (2x2 Grid) */
+    .section-title { font-size: 1.25rem; font-weight: 600; color: var(--text-main); margin-bottom: 1rem; }
+    .hobby-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-bottom: 2.5rem; }
+    .hobby-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem; transition: border-color 0.2s; }
+    .hobby-card:hover { border-color: var(--accent); }
+    .hobby-card h3 { font-size: 1rem; color: var(--accent); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
+    .hobby-card p { font-size: 0.875rem; color: var(--text-muted); line-height: 1.5; }
 
     /* Contact Card & Form */
     .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; margin-bottom: 2rem; }
@@ -69,28 +77,59 @@
 
   <div class="container">
     <header>
-      <!-- Headshot Avatar -->
+      <!-- Profile Headshot -->
       <img src="profile.png" alt="Matt Ward" class="profile-img">
 
       <div class="status-badge">
         <span class="status-dot"></span> Available for Advisory & Consulting
       </div>
       <h1>Matt Ward</h1>
-      <div class="subtitle">Technical Presales & Enterprise Solution Architecture</div>
+      <div class="subtitle">Enterprise Solution Architect & Technical Presales Specialist</div>
       <p class="bio">
-        Strategic Technical Presales Leader with over 20 years' experience driving digital transformation across enterprise environments. Specialising in pre-sales solution architecture, hybrid cloud, multi-vendor strategies, and bridging complex technical capabilities with commercial business goals.
+        Solution architect and technical presales practitioner with over 20 years' experience across enterprise environments. I focus on hybrid cloud strategy, cyber resilience, and multi-vendor integration - helping teams translate complex technical capabilities into practical, reliable business outcomes. Grounded in hands-on engineering, I value pragmatic design, clear communication, and straightforward problem-solving.
       </p>
 
       <div class="skills">
-        <span class="skill-tag">Technical Presales</span>
         <span class="skill-tag">Solution Architecture</span>
+        <span class="skill-tag">Technical Presales</span>
         <span class="skill-tag">Hybrid Cloud</span>
-        <span class="skill-tag">Data Strategy</span>
-        <span class="skill-tag">Multi-Vendor Strategy</span>
         <span class="skill-tag">Cyber Resilience</span>
+        <span class="skill-tag">Multi-Vendor Integration</span>
+        <span class="skill-tag">Zero Trust Frameworks</span>
+        <span class="skill-tag">Data Strategy</span>
+        <span class="skill-tag">Technical Advisory</span>
       </div>
     </header>
 
+    <!-- Hands-On Lab & Experiments Section (2x2 Grid) -->
+    <section>
+      <h2 class="section-title">Beyond the Desk - Hands-On Lab & Experiments</h2>
+      <div class="hobby-grid">
+        
+        <div class="hobby-card">
+          <h3>🌐 Network Design & Resilience</h3>
+          <p>Designing reliable, segmented network topologies featuring high-speed backbones, multi-tier VLAN isolation, Zero Trust access principles, and DNS-level ad mitigation.</p>
+        </div>
+
+        <div class="hobby-card">
+          <h3>🔒 Private Compute & Local Security</h3>
+          <p>Building self-hosted, local-first infrastructure designed for privacy and resilience. Focused on edge compute, physical access systems, and offline-capable telemetry pipelines.</p>
+        </div>
+
+        <div class="hobby-card">
+          <h3>🤖 Edge Compute & Automation</h3>
+          <p>Running containerised microservices, exploring open-source local LLMs, and building self-hosted automation workflows to stay hands-on with emerging technology.</p>
+        </div>
+
+        <div class="hobby-card">
+          <h3>📻 RF Systems & Radio Engineering</h3>
+          <p>Licensed Amateur Radio operator exploring physical-layer principles - including RF spectrum analysis, signal propagation dynamics, custom antenna design, and physical cabling.</p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Contact Form -->
     <main class="card">
       <h2>Get in Touch</h2>
       <form id="contact-form" action="https://api.web3forms.com/submit" method="POST">
@@ -113,7 +152,7 @@
 
         <div class="form-group">
           <label for="message">Message</label>
-          <textarea id="message" name="message" required placeholder="How can I help with your project?"></textarea>
+          <textarea id="message" name="message" required placeholder="How can I help with your project or technical challenge?"></textarea>
         </div>
 
         <button type="submit">Send Message</button>
