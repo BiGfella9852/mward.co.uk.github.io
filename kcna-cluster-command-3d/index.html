@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CloudCart: Cluster Command — KCNA Ops Game</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#141928; --ink2:#1c2336; --ink3:#252e47; --line:#323d5e;
+    --paper:#eef1fa; --muted:#8a93ad;
+    --purple:#7c63f0; --teal:#17b8a6; --amber:#f0a13c; --red:#e5484d;
+    --teal-soft:#123c3f; --red-soft:#3c1a20; --purple-soft:#2a2650;
+    --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+    --disp:"Space Grotesk","Segoe UI",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--paper); font-family:var(--disp)}
+  canvas{display:block; position:fixed; inset:0}
+
+  /* ---------- HUD ---------- */
+  .hud{position:fixed; inset:0; pointer-events:none; z-index:5}
+  .hud > *{pointer-events:auto}
+
+  .topbar{
+    position:absolute; top:0; left:0; right:0; display:flex; align-items:center; gap:1.2rem;
+    padding:.7rem 1.1rem; background:linear-gradient(180deg, rgba(16,20,31,.92), rgba(16,20,31,0));
+    flex-wrap:wrap;
+  }
+  .logo{font-weight:700; font-size:1.05rem; letter-spacing:-.02em; white-space:nowrap}
+  .logo .a{color:var(--teal)}
+  .stat{font-family:var(--mono); font-size:.68rem; color:var(--muted); line-height:1.25}
+  .stat b{display:block; color:var(--paper); font-size:.95rem}
+  .stat b.bad{color:var(--red)} .stat b.warn{color:var(--amber)}
+  .slowrap{flex:1; min-width:140px; max-width:320px}
+  .slotrack{height:9px; border-radius:5px; background:var(--ink3); overflow:hidden; border:1px solid var(--line)}
+  .slofill{height:100%; background:var(--teal); width:100%; transition:width .3s, background .3s}
+  .wavechip{font-family:var(--mono); font-size:.7rem; border:1px solid var(--line); border-radius:6px; padding:.3rem .6rem; color:var(--muted); white-space:nowrap}
+  .wavechip b{color:var(--paper)}
+
+  /* ---------- deployments bar ---------- */
+  .deploys{
+    position:absolute; bottom:0; left:0; right:0; display:flex; gap:.7rem; justify-content:center;
+    padding:0 .8rem 1rem; flex-wrap:wrap;
+    background:linear-gradient(0deg, rgba(16,20,31,.92), rgba(16,20,31,0));
+  }
+  .dep{
+    background:var(--ink2); border:1px solid var(--line); border-radius:12px; padding:.6rem .8rem;
+    display:flex; align-items:center; gap:.7rem; min-width:230px;
+  }
+  .dep .swatch{width:11px; height:11px; border-radius:3px; flex:none}
+  .dep .nm{font-family:var(--mono); font-size:.74rem; line-height:1.3}
+  .dep .nm small{color:var(--muted); display:block; font-size:.64rem}
+  .dep .ctr{margin-left:auto; display:flex; align-items:center; gap:.45rem}
+  .dep button{
+    font:inherit; font-family:var(--mono); width:30px; height:30px; border-radius:8px; cursor:pointer;
+    background:var(--ink3); color:var(--paper); border:1px solid var(--line); font-size:1rem; line-height:1;
+  }
+  .dep button:hover{border-color:var(--purple)}
+  .dep button:disabled{opacity:.35; cursor:default}
+  .dep .cnt{font-family:var(--mono); font-size:.85rem; min-width:2.6ch; text-align:center}
+
+  /* ---------- incident / describe panel ---------- */
+  .panel{
+    position:absolute; top:64px; right:14px; width:min(400px, 92vw);
+    background:var(--ink2); border:1px solid var(--line); border-radius:14px; padding:1rem 1.1rem;
+    box-shadow:0 12px 40px rgba(0,0,0,.5); display:none; max-height:calc(100vh - 200px); overflow:auto;
+  }
+  .panel.open{display:block}
+  .panel .eyebrow{font-family:var(--mono); font-size:.64rem; letter-spacing:.1em; text-transform:uppercase; color:var(--red); margin-bottom:.35rem}
+  .panel .eyebrow.info{color:var(--teal)}
+  .panel h3{font-size:1.02rem; letter-spacing:-.01em; margin-bottom:.5rem}
+  .ev{
+    font-family:var(--mono); font-size:.68rem; line-height:1.6; color:#c8e8d8;
+    background:#10141f; border:1px solid var(--line); border-radius:9px; padding:.7rem .8rem;
+    white-space:pre-wrap; margin-bottom:.7rem;
+  }
+  .ev .hl{color:var(--amber)}
+  .act{
+    display:block; width:100%; text-align:left; font:inherit; font-size:.85rem; color:var(--paper); cursor:pointer;
+    background:var(--ink3); border:1px solid var(--line); border-radius:9px; padding:.6rem .75rem; margin:.4rem 0;
+  }
+  .act:hover{border-color:var(--purple)}
+  .act.wrong{background:var(--red-soft); border-color:var(--red); opacity:.6; pointer-events:none}
+  .act.right{background:var(--teal-soft); border-color:var(--teal)}
+  .panel .close{position:sticky; float:right; top:0; background:none; border:none; color:var(--muted); font-size:1.1rem; cursor:pointer}
+  .panel .note{font-size:.78rem; color:var(--muted); line-height:1.5; margin-top:.5rem}
+
+  /* ---------- toasts, banner ---------- */
+  .toasts{position:absolute; top:70px; left:50%; transform:translateX(-50%); display:flex; flex-direction:column; gap:.4rem; align-items:center; pointer-events:none}
+  .toast{
+    font-family:var(--mono); font-size:.74rem; background:var(--ink2); border:1px solid var(--line);
+    border-radius:9px; padding:.5rem .9rem; opacity:0; transition:opacity .3s; max-width:min(560px, 90vw); text-align:center;
+  }
+  .toast.show{opacity:1}
+  .toast.ok{border-color:var(--teal); color:#bdeee6}
+  .toast.bad{border-color:var(--red); color:#f4c0c3}
+  .toast.warn{border-color:var(--amber); color:#f6ddb4}
+
+  .banner{
+    position:absolute; top:38%; left:50%; transform:translate(-50%,-50%); text-align:center;
+    opacity:0; transition:opacity .5s; pointer-events:none;
+  }
+  .banner.show{opacity:1}
+  .banner .w{font-family:var(--mono); font-size:.75rem; color:var(--amber); letter-spacing:.15em}
+  .banner h2{font-size:clamp(1.5rem,4vw,2.4rem); letter-spacing:-.02em; text-shadow:0 4px 30px rgba(0,0,0,.8)}
+  .banner p{color:var(--muted); font-size:.9rem; margin-top:.3rem}
+
+  /* ---------- 3D-projected labels ---------- */
+  .lbl{
+    position:absolute; transform:translate(-50%,-100%); font-family:var(--mono); font-size:.62rem;
+    color:var(--muted); letter-spacing:.06em; pointer-events:none; white-space:nowrap; text-shadow:0 1px 6px #000;
+  }
+  .flag{
+    position:absolute; transform:translate(-50%,-100%); font-size:1.15rem; cursor:pointer; pointer-events:auto;
+    animation:pulse 1s infinite; filter:drop-shadow(0 0 6px rgba(229,72,77,.9)); user-select:none;
+  }
+  @keyframes pulse{0%,100%{transform:translate(-50%,-100%) scale(1)}50%{transform:translate(-50%,-100%) scale(1.35)}}
+  @media (prefers-reduced-motion: reduce){ .flag{animation:none} }
+
+  /* ---------- overlay screens ---------- */
+  .screen{
+    position:fixed; inset:0; z-index:10; display:flex; align-items:center; justify-content:center;
+    background:rgba(12,15,24,.82); backdrop-filter:blur(6px);
+  }
+  .card{
+    width:min(640px, 92vw); background:var(--ink2); border:1px solid var(--line); border-radius:18px;
+    padding:1.8rem 1.9rem; max-height:90vh; overflow:auto;
+  }
+  .card .eyebrow{font-family:var(--mono); font-size:.7rem; letter-spacing:.12em; text-transform:uppercase; color:var(--purple); margin-bottom:.6rem}
+  .card h1{font-size:clamp(1.5rem,4.5vw,2.2rem); letter-spacing:-.03em; line-height:1.1}
+  .card p{color:var(--muted); line-height:1.6; margin-top:.8rem; font-size:.95rem}
+  .card p b{color:var(--paper)}
+  .howto{display:grid; gap:.5rem; margin-top:1rem}
+  .howto div{display:flex; gap:.7rem; align-items:baseline; font-size:.88rem; color:#d5daea}
+  .howto .k{font-family:var(--mono); font-size:.68rem; color:var(--amber); border:1px solid var(--line); border-radius:5px; padding:.15rem .5rem; flex:none}
+  .btn{
+    font:inherit; font-weight:600; cursor:pointer; color:#fff; background:var(--purple);
+    border:none; border-radius:10px; padding:.8rem 1.6rem; margin-top:1.4rem;
+  }
+  .btn:hover{filter:brightness(1.1)}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:.4rem 1.4rem; margin-top:1rem; font-family:var(--mono); font-size:.8rem}
+  .grid2 span{color:var(--muted)} .grid2 b{text-align:right}
+  .final{font-family:var(--mono); font-size:clamp(2rem,7vw,3.2rem); font-weight:700; color:var(--teal); letter-spacing:-.03em; margin-top:.4rem}
+  .tip{margin-top:1rem; border-left:3px solid var(--amber); background:rgba(240,161,60,.08); border-radius:0 8px 8px 0; padding:.7rem .9rem; font-size:.85rem; line-height:1.55; color:#e8dcc4}
+</style>
+</head>
+<body>
+<canvas id="c3d"></canvas>
+
+<div class="hud">
+  <div class="topbar">
+    <div class="logo">CloudCart: <span class="a">Cluster Command</span></div>
+    <div class="stat">score<b id="hScore">0</b></div>
+    <div class="stat">served<b id="hServed">0</b></div>
+    <div class="stat">failed<b id="hFailed">0</b></div>
+    <div class="stat slowrap">availability (SLO 95%)
+      <div class="slotrack"><div class="slofill" id="slo"></div></div>
+    </div>
+    <div class="wavechip" id="waveChip">wave <b>0</b>/6 · —</div>
+  </div>
+
+  <div class="toasts" id="toasts"></div>
+  <div class="banner" id="banner"><div class="w" id="bW"></div><h2 id="bT"></h2><p id="bS"></p></div>
+
+  <div class="panel" id="panel">
+    <button class="close" id="pClose" aria-label="Close">✕</button>
+    <div class="eyebrow" id="pEyebrow">incident</div>
+    <h3 id="pTitle"></h3>
+    <div class="ev" id="pEv"></div>
+    <div id="pActs"></div>
+    <div class="note" id="pNote"></div>
+  </div>
+
+  <div class="deploys" id="deploys"></div>
+  <div id="labels"></div>
+</div>
+
+<div class="screen" id="intro">
+  <div class="card">
+    <div class="eyebrow">// KCNA ops game · real-time</div>
+    <h1>You're on call.<br>Keep CloudCart serving.</h1>
+    <p>Live traffic flows <b>Ingress → Services → Pods</b> across three worker nodes. Six waves of rising load and real Kubernetes failures. Diagnose from evidence, fix through the right action — <b>the cluster doesn't pause.</b></p>
+    <div class="howto">
+      <div><span class="k">drag</span><span>orbit the cluster · <b>scroll</b> to zoom</span></div>
+      <div><span class="k">− / +</span><span>scale Deployments from the bottom bar — new Pods take time to become Ready, and nodes have finite capacity (requests!)</span></div>
+      <div><span class="k">click ⚠</span><span>investigate a failing object — read the evidence, choose the corrective action</span></div>
+      <div><span class="k">click</span><span>any Pod anytime for a live <b>describe</b></span></div>
+    </div>
+    <p style="font-size:.82rem">Scoring: +10 per served request, +300 per correct fix (faster fix = bigger bonus), −150 per wrong action. Hold the 95% SLO.</p>
+    <button class="btn" id="start">kubectl apply -f oncall.yaml</button>
+  </div>
+</div>
+
+<div class="screen" id="end" style="display:none">
+  <div class="card">
+    <div class="eyebrow">// shift report</div>
+    <h1 id="endRank"></h1>
+    <div class="final" id="endScore"></div>
+    <div class="grid2" id="endStats"></div>
+    <div class="tip" id="endTip"></div>
+    <button class="btn" id="replay">flux reconcile --replay</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+"use strict";
+/* ================= palette ================= */
+const C = { ink:0x141928, floor:0x10141f, line:0x323d5e,
+  purple:0x7c63f0, teal:0x17b8a6, amber:0xf0a13c, red:0xe5484d,
+  grayblue:0x5c6a94, white:0xeef1fa };
+
+/* ================= three setup ================= */
+const canvas = document.getElementById("c3d");
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(C.ink);
+scene.fog = new THREE.Fog(C.ink, 34, 70);
+const camera = new THREE.PerspectiveCamera(50, 1, .1, 200);
+
+const hemi = new THREE.HemisphereLight(0x8a93ad, 0x141928, .75); scene.add(hemi);
+const dir = new THREE.DirectionalLight(0xffffff, .55); dir.position.set(8,14,6); scene.add(dir);
+const glowP = new THREE.PointLight(C.purple, .5, 30); glowP.position.set(-4,6,0); scene.add(glowP);
+
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(140,140), new THREE.MeshStandardMaterial({color:C.floor, roughness:.95}));
+floor.rotation.x = -Math.PI/2; floor.position.y = -0.02; scene.add(floor);
+const grid = new THREE.GridHelper(140, 70, C.line, 0x1c2336);
+grid.material.opacity = .35; grid.material.transparent = true; scene.add(grid);
+
+/* ---------- custom orbit ---------- */
+const orbit = { theta:-0.5, phi:1.12, r:30, tgt:new THREE.Vector3(0,1.2,0) };
+function camUpdate(){
+  orbit.phi = Math.max(.5, Math.min(1.45, orbit.phi));
+  orbit.r = Math.max(14, Math.min(52, orbit.r));
+  camera.position.set(
+    orbit.tgt.x + orbit.r*Math.sin(orbit.phi)*Math.sin(orbit.theta),
+    orbit.tgt.y + orbit.r*Math.cos(orbit.phi),
+    orbit.tgt.z + orbit.r*Math.sin(orbit.phi)*Math.cos(orbit.theta));
+  camera.lookAt(orbit.tgt);
+}
+let drag=null, moved=0;
+canvas.addEventListener("pointerdown", e=>{ drag={x:e.clientX,y:e.clientY}; moved=0; canvas.setPointerCapture(e.pointerId); });
+canvas.addEventListener("pointermove", e=>{
+  if(!drag) return;
+  const dx=e.clientX-drag.x, dy=e.clientY-drag.y; moved += Math.abs(dx)+Math.abs(dy);
+  orbit.theta -= dx*0.005; orbit.phi -= dy*0.004; drag={x:e.clientX,y:e.clientY}; camUpdate();
+});
+canvas.addEventListener("pointerup", e=>{ if(drag && moved<7) pick(e); drag=null; });
+canvas.addEventListener("wheel", e=>{ orbit.r += e.deltaY*0.02; camUpdate(); }, {passive:true});
+function resize(){ const w=innerWidth,h=innerHeight; renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix(); }
+addEventListener("resize", resize); resize(); camUpdate();
+
+/* ================= cluster geometry ================= */
+const nodes = [
+  { name:"worker-1", x:-3.5, z:0,   w:5.5, d:7.5, slots:[], tier:"frontend", cap:4 },
+  { name:"worker-2", x:3.5,  z:-4.2,w:5.5, d:5.2, slots:[], tier:"api", cap:3 },
+  { name:"worker-3", x:3.5,  z:4.2, w:5.5, d:5.2, slots:[], tier:"api", cap:3 },
+  { name:"worker-1 (db)", x:10.5, z:0, w:4, d:4.5, slots:[], tier:"db", cap:2 },
+];
+nodes.forEach(n=>{
+  const m = new THREE.Mesh(new THREE.BoxGeometry(n.w,.5,n.d),
+    new THREE.MeshStandardMaterial({color:0x1c2336, roughness:.8, metalness:.15}));
+  m.position.set(n.x,.25,n.z); scene.add(m);
+  const edge = new THREE.Mesh(new THREE.BoxGeometry(n.w+.12,.06,n.d+.12),
+    new THREE.MeshStandardMaterial({color:C.line, emissive:C.line, emissiveIntensity:.25}));
+  edge.position.set(n.x,.53,n.z); scene.add(edge);
+  // slot positions
+  const cols = n.cap===4?2:n.cap===3?3:2, rows = Math.ceil(n.cap/cols);
+  let k=0;
+  for(let r=0;r<rows;r++) for(let c=0;c<cols && k<n.cap;c++,k++){
+    n.slots.push({ x:n.x + (c-(cols-1)/2)*(n.w/cols)*0.82, z:n.z + (r-(rows-1)/2)*(n.d/rows)*0.7, pod:null });
+  }
+});
+
+/* ingress gate */
+const gate = new THREE.Group();
+const torus = new THREE.Mesh(new THREE.TorusGeometry(1.7,.14,12,40),
+  new THREE.MeshStandardMaterial({color:C.teal, emissive:C.teal, emissiveIntensity:.7}));
+torus.rotation.y = Math.PI/2; gate.add(torus);
+gate.position.set(-15,2,0); scene.add(gate);
+
+/* service pylons */
+function pylon(x, color){
+  const g = new THREE.Group();
+  const post = new THREE.Mesh(new THREE.CylinderGeometry(.09,.09,3.4,8),
+    new THREE.MeshStandardMaterial({color:C.line, roughness:.6}));
+  post.position.y = 1.7; g.add(post);
+  const orb = new THREE.Mesh(new THREE.SphereGeometry(.42,18,14),
+    new THREE.MeshStandardMaterial({color, emissive:color, emissiveIntensity:.9}));
+  orb.position.y = 3.6; g.add(orb);
+  g.position.set(x,0,0); scene.add(g);
+  const svc = { g, orb, x, y:3.6, broken:false };
+  orb.userData = { kind:"svc", ref:svc };
+  return svc;
+}
+const SVC = {
+  frontend: pylon(-9.5, C.purple),
+  api:      pylon(0.2,  C.teal),
+  db:       pylon(7.2,  C.amber),
+};
+// (svc orbs become pickable once the pickables list exists — see below)
+
+/* ================= pods ================= */
+const TIER = {
+  frontend:{ color:C.purple, cap:2, label:"frontend" },
+  api:     { color:C.teal,   cap:2, label:"api" },
+  db:      { color:C.amber,  cap:6, label:"postgres" },
+};
+const pods = []; const pickables = [];
+Object.values(SVC).forEach(s=> pickables.push(s.orb));
+let podSeq = 0;
+const hash = ()=>Math.random().toString(36).slice(2,6);
+
+function podMaterialFor(tier){ return new THREE.MeshStandardMaterial({color:TIER[tier].color, emissive:TIER[tier].color, emissiveIntensity:.35, roughness:.4}); }
+
+function findSlot(tier){
+  for(const n of nodes) if(n.tier===tier)
+    for(const s of n.slots) if(!s.pod) return {n,s};
+  return null;
+}
+function addPod(tier, instant=false){
+  const spot = findSlot(tier);
+  const mesh = new THREE.Mesh(new THREE.BoxGeometry(1.15,1.15,1.15), podMaterialFor(tier));
+  const p = { id:++podSeq, name:`${TIER[tier].label}-${hash()}-${hash().slice(0,3)}`,
+    tier, mesh, load:0, restarts:0, state: spot ? (instant?"ready":"creating") : "pending",
+    t:0, slot:spot?spot.s:null, node:spot?spot.n:null };
+  if(spot){ spot.s.pod = p; mesh.position.set(spot.s.x, 1.1, spot.s.z); }
+  else { mesh.position.set(-1 + Math.random()*2, 1.1, 9.5); } // staging: unschedulable
+  mesh.userData = {kind:"pod", ref:p};
+  scene.add(mesh); pods.push(p); pickables.push(mesh);
+  applyPodLook(p);
+  if(p.state==="pending") toast(`⚠ ${p.name} Pending — 0/4 nodes available: Insufficient cpu (requests don't fit)`, "warn", 4200);
+  return p;
+}
+function removePod(p){
+  p.state = "terminated";                 // in-flight requests re-resolve away from it
+  if(p.slot) p.slot.pod = null;
+  scene.remove(p.mesh); p.mesh.geometry.dispose(); p.mesh.material.dispose();
+  pods.splice(pods.indexOf(p),1);
+  pickables.splice(pickables.indexOf(p.mesh),1);
+  rebuildBeams();
+}
+function applyPodLook(p){
+  const m = p.mesh.material, base = TIER[p.tier].color;
+  m.transparent = false; m.opacity = 1;
+  if(p.state==="ready"){ m.color.setHex(base); m.emissive.setHex(base); m.emissiveIntensity=.35; }
+  else if(p.state==="creating"){ m.color.setHex(base); m.emissive.setHex(C.amber); m.emissiveIntensity=.5; m.transparent=true; m.opacity=.55; }
+  else if(p.state==="pending"){ m.color.setHex(C.grayblue); m.emissive.setHex(C.amber); m.emissiveIntensity=.35; m.transparent=true; m.opacity=.4; }
+  else if(p.state==="crash"){ m.color.setHex(C.red); m.emissive.setHex(C.red); m.emissiveIntensity=.7; }
+  else if(p.state==="pulling"){ m.color.setHex(C.grayblue); m.emissive.setHex(C.grayblue); m.emissiveIntensity=.45; m.transparent=true; m.opacity=.6; }
+}
+function readyPods(tier){ return pods.filter(p=>p.tier===tier && p.state==="ready"); }
+function schedulePendings(){
+  for(const p of pods) if(p.state==="pending" && !p.slot){
+    const spot = findSlot(p.tier);
+    if(spot){ p.slot=spot.s; p.node=spot.n; spot.s.pod=p;
+      p.mesh.position.set(spot.s.x,1.1,spot.s.z); p.state="creating"; p.t=0; applyPodLook(p);
+      toast(`${p.name} scheduled → ContainerCreating`, "ok", 2500); }
+  }
+}
+
+/* ---------- service beams ---------- */
+let beams = [];
+function rebuildBeams(){
+  beams.forEach(b=>{ scene.remove(b); b.geometry.dispose(); b.material.dispose(); });
+  beams = [];
+  for(const [tier,svc] of Object.entries(SVC)){
+    if(svc.broken) continue;
+    for(const p of readyPods(tier)){
+      const g = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(svc.x, svc.y, 0), p.mesh.position.clone().setY(1.7)]);
+      const l = new THREE.Line(g, new THREE.LineBasicMaterial({color:TIER[tier].color, transparent:true, opacity:.4}));
+      scene.add(l); beams.push(l);
+    }
+    svc.orb.material.emissiveIntensity = .9;
+  }
+  for(const [tier,svc] of Object.entries(SVC)) if(svc.broken) svc.orb.material.emissiveIntensity = .12;
+}
+
+/* ================= requests ================= */
+const reqPool = [];
+function getReq(){
+  let r = reqPool.find(r=>!r.active);
+  if(!r){
+    const mesh = new THREE.Mesh(new THREE.SphereGeometry(.16,10,8),
+      new THREE.MeshStandardMaterial({color:C.white, emissive:C.white, emissiveIntensity:.9, transparent:true}));
+    scene.add(mesh); r = {mesh}; reqPool.push(r);
+  }
+  r.active = true; r.mesh.visible = true; r.mesh.material.opacity = 1;
+  r.mesh.material.emissive.setHex(C.white); r.mesh.material.color.setHex(C.white);
+  return r;
+}
+const HOPS = ["frontend","api","db"];
+function spawnReq(){
+  const r = getReq();
+  r.hop = 0; r.pod = null; r.dwell = 0; r.dead = false; r.served = false; r.fallV = 0;
+  r.mesh.position.set(-15, 2, (Math.random()-.5)*1.6);
+  r.from = r.mesh.position.clone();
+  aimAtService(r);
+  G.inflight++;
+}
+function aimAtService(r){
+  const tier = HOPS[r.hop], svc = SVC[tier];
+  r.to = new THREE.Vector3(svc.x, svc.y, 0); r.phase = "toSvc"; r.prog = 0;
+  r.dist = r.from.distanceTo(r.to);
+}
+function resolveEndpoint(r){
+  const tier = HOPS[r.hop], svc = SVC[tier];
+  if(svc.broken) return null;                      // endpoints: <none>
+  const ready = readyPods(tier).filter(p=>p.load < TIER[tier].cap);
+  if(!ready.length) return null;
+  ready.sort((a,b)=>a.load-b.load);
+  return ready[0];
+}
+function failReq(r, why){
+  r.dead = true; r.mesh.material.color.setHex(C.red); r.mesh.material.emissive.setHex(C.red);
+  if(r.pod){ r.pod.load--; r.pod = null; }
+  G.failed++; G.health = Math.max(0, G.health - 2.5);
+  G.failLog[why] = (G.failLog[why]||0)+1;
+}
+function serveReq(r){
+  r.served = true; r.dead = true;
+  r.mesh.material.color.setHex(C.teal); r.mesh.material.emissive.setHex(C.teal);
+  G.served++; G.score += 10; G.health = Math.min(100, G.health + .35);
+}
+function updateReq(r, dt){
+  if(r.dead){ // fall or rise + fade
+    r.fallV += (r.served? 2.2 : -6) * dt;
+    r.mesh.position.y += r.fallV * dt * (r.served?1:1);
+    r.mesh.material.opacity -= dt*1.4;
+    if(r.mesh.material.opacity<=0){ r.active=false; r.mesh.visible=false; G.inflight--; }
+    return;
+  }
+  if(r.phase==="dwell"){
+    r.dwell -= dt;
+    if(r.dwell<=0){
+      r.pod.load--; r.pod=null; r.hop++;
+      if(r.hop>=HOPS.length){ serveReq(r); return; }
+      r.from = r.mesh.position.clone(); aimAtService(r);
+    }
+    return;
+  }
+  r.prog += dt * 9 / Math.max(r.dist,.001);
+  r.mesh.position.lerpVectors(r.from, r.to, Math.min(r.prog,1));
+  if(r.phase==="toSvc") r.mesh.position.y += Math.sin(Math.min(r.prog,1)*Math.PI)*.6;
+  if(r.prog>=1){
+    if(r.phase==="toSvc"){
+      const p = resolveEndpoint(r);
+      if(!p){ failReq(r, HOPS[r.hop]); return; }
+      p.load++; r.pod=p; r.phase="toPod"; r.prog=0;
+      r.from = r.mesh.position.clone();
+      r.to = p.mesh.position.clone().setY(1.85); r.dist=r.from.distanceTo(r.to);
+    } else { // arrived at pod
+      if(!r.pod || r.pod.state!=="ready"){        // pod died in transit — re-resolve
+        if(r.pod){r.pod.load--;}
+        const p2 = resolveEndpoint(r);
+        if(!p2){ failReq(r, HOPS[r.hop]); return; }
+        r.pod=p2; p2.load++; r.from=r.mesh.position.clone();
+        r.to=p2.mesh.position.clone().setY(1.85); r.prog=0; r.dist=r.from.distanceTo(r.to); return;
+      }
+      r.phase="dwell"; r.dwell=.55;
+    }
+  }
+}
+
+/* ================= game state ================= */
+const G = { score:0, served:0, failed:0, health:100, inflight:0,
+  wave:0, waveT:0, running:false, over:false, spawnT:0,
+  incidents:[], failLog:{}, fixes:0, wrongs:0, mttrs:[], t:0 };
+
+/* ================= incidents ================= */
+function fmtEv(s){ return s.replaceAll("<hl>","<span class='hl'>").replaceAll("</hl>","</span>"); }
+
+const INCIDENT_DEFS = {
+  crash: {
+    make(){
+      let list = readyPods("api");
+      if(!list.length) list = pods.filter(p=>p.tier==="api" && p.state!=="pending");
+      if(!list.length) return null;
+      const p = list[Math.floor(Math.random()*list.length)];
+      p.state="crash"; p.restarts=5; p.load=0; applyPodLook(p); rebuildBeams();
+      return { target:p, title:`Pod ${p.name} is failing`, obj:p.mesh,
+        ev:`$ kubectl -n cloudcart get pod ${p.name}
+${p.name}   0/1   <hl>CrashLoopBackOff</hl>   5
+
+$ kubectl -n cloudcart logs ${p.name} --previous | tail -1
+  panic: runtime error (transient startup race)`,
+        acts:[
+          ["Delete the Pod — its ReplicaSet will reconcile a fresh one", true,
+           "Reconciliation IS the fix: desired 3, observed 2, controller acts. New Pod, new name."],
+          ["Exec into the container and patch the process", false,
+           "Immutable infrastructure: never repair a running container. Replace it."],
+          ["Reboot the worker node", false,
+           "Maximum blast radius for a one-Pod problem — every Pod on that node dies too."]],
+        fix(){ p.state="creating"; p.t=0; p.name=`api-${hash()}-${hash().slice(0,3)}`; applyPodLook(p); }
+      };
+    }},
+  imagepull: {
+    make(){
+      let list = readyPods("api");
+      if(!list.length) list = pods.filter(p=>p.tier==="api" && p.state!=="pending");
+      if(!list.length) return null;
+      const victims = list.slice(0, Math.min(2, list.length));
+      victims.forEach(p=>{ p.state="pulling"; p.load=0; applyPodLook(p); });
+      rebuildBeams();
+      const inc = { targets:victims, target:victims[0], obj:victims[0].mesh,
+        title:"Rollout stuck — new Pods can't pull",
+        ev:`$ kubectl -n cloudcart get pods | grep api
+api-c41b-8kd   0/1   <hl>ImagePullBackOff</hl>
+api-c41b-2fq   0/1   <hl>ImagePullBackOff</hl>
+
+$ kubectl describe pod api-c41b-8kd | tail -2
+  Failed to pull "ghcr.io/…/api:<hl>1.O.1</hl>":
+  <hl>manifest unknown</hl>`,
+        acts:[
+          ["Fix the tag in Git (1.O.1 → 1.0.1), commit, let Flux reconcile", true,
+           "manifest unknown = the tag doesn't exist (letter O, not zero). Desired state lives in Git — fix it at the source."],
+          ["kubectl set image on the live Deployment", "drift",
+           ""],
+          ["Delete and recreate the registry pull secret", false,
+           "Auth isn't the problem — the registry answered. The tag itself is wrong."]],
+        fix(){ victims.forEach(p=>{ p.state="creating"; p.t=0; applyPodLook(p); }); }
+      };
+      return inc;
+    }},
+  selector: {
+    make(){
+      SVC.api.broken = true; rebuildBeams();
+      return { target:SVC.api, obj:SVC.api.orb, svc:true,
+        title:"Service api — connection refused",
+        ev:`$ kubectl -n cloudcart get svc api -o wide
+api   ClusterIP   10.96.44.7   selector=<hl>app=apii</hl>
+
+$ kubectl -n cloudcart get endpointslices
+api-k2x   IPv4   <hl>&lt;none&gt;</hl>`,
+        acts:[
+          ["Fix the selector in Git (app=apii → app=api)", true,
+           "The selector matches nothing, so the EndpointSlice is empty. DNS still resolves — there's just nowhere to send traffic."],
+          ["Scale the API Deployment up", false,
+           "More Pods with app=api won't help — the selector still says apii. Capacity isn't the problem; selection is."],
+          ["Restart all API Pods", false,
+           "The Pods are Ready and healthy. Restarting them changes nothing about the Service's selector."]],
+        fix(){ SVC.api.broken=false; rebuildBeams(); }
+      };
+    }},
+  pvc: {
+    make(){
+      const p = pods.find(p=>p.tier==="db"); if(!p) return null;
+      p.state="pending"; p.load=0; applyPodLook(p); rebuildBeams();
+      return { target:p, obj:p.mesh,
+        title:"postgres evicted — replacement won't schedule",
+        ev:`$ kubectl -n cloudcart get pod ${p.name}
+${p.name}   0/1   <hl>Pending</hl>
+
+$ kubectl -n cloudcart get pvc
+cloudcart-data   <hl>Pending</hl>   sc=<hl>fast-ssd</hl>
+
+$ kubectl get storageclass
+standard   rancher.io/local-path`,
+        acts:[
+          ["Fix the overlay: StorageClass fast-ssd → standard, commit", true,
+           "The claim asks for a class this cluster doesn't have. No factory, no volume — exactly what per-environment overlays exist to set."],
+          ["Delete the PVC to unblock scheduling", false,
+           "That deletes the CLAIM to your data. The Pod might start empty — congratulations, you lost the database."],
+          ["Give the Pod more CPU", false,
+           "Read the evidence: the Pod is Pending on an unbound PVC, not on compute."]],
+        fix(){ p.state="creating"; p.t=0; applyPodLook(p); }
+      };
+    }},
+};
+
+let flagSeq = 0;
+function raiseIncident(type, retry=true){
+  const def = INCIDENT_DEFS[type]; const inc = def.make();
+  if(!inc){ if(retry) setTimeout(()=>{ if(!G.over) raiseIncident(type,false); }, 4000); return; }
+  inc.type = type; inc.t0 = G.t; inc.id = ++flagSeq; inc.resolved = false;
+  G.incidents.push(inc);
+  addFlag(inc);
+  toast(`⚠ INCIDENT — click the flashing marker to investigate`, "bad", 3500);
+}
+function resolveIncident(inc, actEl){
+  inc.resolved = true;
+  const mttr = G.t - inc.t0; G.mttrs.push(mttr); G.fixes++;
+  const bonus = Math.max(0, Math.round(300 + (25-mttr)*8));
+  G.score += bonus;
+  removeFlag(inc);
+  inc.fix();
+  rebuildBeams();
+  toast(`✔ Reconciled in ${mttr.toFixed(0)}s · +${bonus}`, "ok", 3000);
+}
+
+/* drift twist for kubectl set image */
+function driftAction(inc){
+  G.score -= 50; G.wrongs++;
+  inc.targets.forEach(p=>{ p.state="ready"; applyPodLook(p); }); rebuildBeams();
+  closePanel();
+  toast("✔ kubectl set image applied — Pods pulling…", "ok", 2600);
+  setTimeout(()=>{
+    if(inc.resolved || G.over) return;
+    inc.targets.forEach(p=>{ if(p.state==="ready"){ p.state="pulling"; p.load=0; applyPodLook(p);} });
+    rebuildBeams();
+    toast("⚠ Flux reverted manual drift — Git still declares tag 1.O.1. Fix desired state IN GIT.", "warn", 5200);
+  }, 6000);
+}
+
+/* ================= flags & labels (projected HTML) ================= */
+const labelsBox = document.getElementById("labels");
+const staticLabels = [
+  {txt:"INGRESS", get:()=>new THREE.Vector3(-15,4.3,0)},
+  {txt:"svc/frontend", get:()=>new THREE.Vector3(SVC.frontend.x,4.7,0)},
+  {txt:"svc/api", get:()=>new THREE.Vector3(SVC.api.x,4.7,0)},
+  {txt:"svc/postgres", get:()=>new THREE.Vector3(SVC.db.x,4.7,0)},
+].map(l=>{ const el=document.createElement("div"); el.className="lbl"; el.textContent=l.txt; labelsBox.appendChild(el); return {...l, el}; });
+
+function addFlag(inc){
+  const el = document.createElement("div"); el.className="flag"; el.textContent="⚠";
+  el.onclick = ()=>openIncident(inc);
+  labelsBox.appendChild(el); inc.flagEl = el;
+}
+function removeFlag(inc){ if(inc.flagEl){ inc.flagEl.remove(); inc.flagEl=null; } }
+function projectLabels(){
+  const w=innerWidth, h=innerHeight, v=new THREE.Vector3();
+  const place=(el,pos)=>{ v.copy(pos).project(camera);
+    el.style.left=((v.x*.5+.5)*w)+"px"; el.style.top=((-v.y*.5+.5)*h)+"px";
+    el.style.display = v.z<1 ? "block":"none"; };
+  staticLabels.forEach(l=>place(l.el, l.get()));
+  G.incidents.forEach(inc=>{ if(inc.flagEl){
+    const pos = inc.svc ? new THREE.Vector3(inc.target.x, 5.4, 0) : inc.obj.position.clone().add(new THREE.Vector3(0,1.3,0));
+    place(inc.flagEl, pos); }});
+}
+
+/* ================= panel ================= */
+const panel = document.getElementById("panel");
+document.getElementById("pClose").onclick = closePanel;
+function closePanel(){ panel.classList.remove("open"); }
+function openIncident(inc){
+  if(inc.resolved) return;
+  panel.classList.add("open");
+  document.getElementById("pEyebrow").textContent = "incident · " + inc.type;
+  document.getElementById("pEyebrow").className = "eyebrow";
+  document.getElementById("pTitle").textContent = inc.title;
+  document.getElementById("pEv").innerHTML = fmtEv(inc.ev);
+  document.getElementById("pNote").textContent = "Choose the FIRST corrective action. Wrong actions cost points — and the traffic keeps coming.";
+  const box = document.getElementById("pActs"); box.innerHTML = "";
+  inc.acts.forEach(a=>{
+    const b = document.createElement("button"); b.className="act"; b.textContent=a[0];
+    b.onclick = ()=>{
+      if(inc.resolved) return;
+      if(a[1]===true){ b.classList.add("right");
+        document.getElementById("pNote").textContent = "✔ " + a[2];
+        resolveIncident(inc); setTimeout(closePanel, 1600); }
+      else if(a[1]==="drift"){ driftAction(inc); }
+      else { G.score -= 150; G.wrongs++; b.classList.add("wrong");
+        document.getElementById("pNote").textContent = "✗ " + a[2]; toast("−150 · wrong corrective action", "bad", 2200); }
+      hud();
+    };
+    box.appendChild(b);
+  });
+}
+function openDescribe(p){
+  panel.classList.add("open");
+  document.getElementById("pEyebrow").textContent = "kubectl describe";
+  document.getElementById("pEyebrow").className = "eyebrow info";
+  document.getElementById("pTitle").textContent = "pod/" + p.name;
+  const stateMap = {ready:"Running · 1/1 Ready", creating:"ContainerCreating", pending:"Pending", crash:"CrashLoopBackOff", pulling:"ImagePullBackOff"};
+  document.getElementById("pEv").innerHTML = fmtEv(
+`Tier:      ${TIER[p.tier].label}
+Node:      ${p.node? p.node.name : "<hl>&lt;none&gt;</hl>"}
+Status:    ${p.state==="ready"?stateMap[p.state]:"<hl>"+stateMap[p.state]+"</hl>"}
+Load:      ${p.load}/${TIER[p.tier].cap} concurrent
+Restarts:  ${p.restarts}`);
+  document.getElementById("pActs").innerHTML = "";
+  const inc = G.incidents.find(i=>!i.resolved && (i.target===p || (i.targets&&i.targets.includes(p))));
+  document.getElementById("pNote").textContent = inc ? "This Pod is part of an active incident — click its ⚠ marker to act." :
+    "Healthy. Load shows concurrent requests vs capacity — saturation drives scaling decisions.";
+}
+
+/* ---------- picking ---------- */
+const ray = new THREE.Raycaster(), ptr = new THREE.Vector2();
+function pick(e){
+  ptr.x = (e.clientX/innerWidth)*2-1; ptr.y = -(e.clientY/innerHeight)*2+1;
+  ray.setFromCamera(ptr, camera);
+  const hit = ray.intersectObjects(pickables)[0];
+  if(!hit) return;
+  const ud = hit.object.userData, p = ud.ref;
+  const inc = G.incidents.find(i=>!i.resolved && (i.target===p || (i.targets&&i.targets.includes(p))));
+  if(inc) openIncident(inc);
+  else if(ud.kind==="pod") openDescribe(p);
+}
+
+/* ================= deployments HUD ================= */
+const DEP = {
+  frontend:{min:1,max:4}, api:{min:1,max:6},
+};
+function drawDeploys(){
+  const box = document.getElementById("deploys"); box.innerHTML="";
+  for(const tier of ["frontend","api"]){
+    const all = pods.filter(p=>p.tier===tier), rdy = readyPods(tier).length;
+    const el = document.createElement("div"); el.className="dep";
+    el.innerHTML = `<span class="swatch" style="background:#${TIER[tier].color.toString(16).padStart(6,"0")}"></span>
+      <span class="nm">deploy/${tier}<small>${rdy}/${all.length} Ready · cap ${TIER[tier].cap}/Pod</small></span>
+      <span class="ctr"><button data-t="${tier}" data-d="-1" aria-label="scale down">−</button>
+      <span class="cnt">${all.length}</span>
+      <button data-t="${tier}" data-d="1" aria-label="scale up">+</button></span>`;
+    box.appendChild(el);
+  }
+  const db = document.createElement("div"); db.className="dep";
+  db.innerHTML = `<span class="swatch" style="background:#f0a13c"></span>
+    <span class="nm">sts/postgres<small>1 replica · PVC cloudcart-data</small></span>`;
+  box.appendChild(db);
+  box.querySelectorAll("button").forEach(b=> b.onclick = ()=>scaleTier(b.dataset.t, +b.dataset.d));
+}
+function scaleTier(tier, d){
+  const all = pods.filter(p=>p.tier===tier);
+  if(d>0){
+    if(all.length >= DEP[tier].max) return toast(`replicas capped at ${DEP[tier].max} for this exercise`, "warn", 2200);
+    addPod(tier);
+  } else {
+    if(all.length <= DEP[tier].min) return toast("minReplicas: 1 — something has to serve", "warn", 2200);
+    const victims = all.filter(p=>p.state!=="ready");
+    const v = victims[0] || all.slice().sort((a,b)=>a.load-b.load)[0];
+    removePod(v);
+    toast(`deploy/${tier} scaled down — ${v.name} Terminating`, "ok", 2000);
+  }
+  drawDeploys(); rebuildBeams();
+}
+
+/* ================= waves ================= */
+const WAVES = [
+  { name:"Morning traffic", sub:"Watch the flow. Requests hop Ingress → frontend → api → postgres.", dur:26, spawn:[1.5,1.1], events:[] },
+  { name:"The ramp", sub:"Load is climbing past one Pod's capacity. Scale deploy/api before the SLO bleeds.", dur:34, spawn:[1.0,.45], events:[] },
+  { name:"CrashLoop", sub:"A Pod just died on you. Investigate. Evidence first.", dur:30, spawn:[.55,.5], events:[{at:5, type:"crash"}] },
+  { name:"The bad rollout", sub:"A deploy went out with a broken tag. Choose where the fix belongs.", dur:36, spawn:[.55,.45], events:[{at:4, type:"imagepull"}] },
+  { name:"Silent selector", sub:"Everything looks healthy. Nothing is being served. Trust endpoints, not vibes.", dur:32, spawn:[.5,.45], events:[{at:4, type:"selector"}] },
+  { name:"BOSS: cascade", sub:"Storage failure + crash under peak load. The ladder, under pressure.", dur:40, spawn:[.42,.3], events:[{at:4, type:"pvc"},{at:12, type:"crash"}] },
+];
+function startWave(i){
+  G.wave = i; G.waveT = 0;
+  const w = WAVES[i];
+  WAVES[i].events.forEach(e=> e.done=false);
+  banner(`WAVE ${i+1} / ${WAVES.length}`, w.name, w.sub);
+  document.getElementById("waveChip").innerHTML = `wave <b>${i+1}</b>/6 · ${w.name}`;
+}
+
+/* ================= HUD misc ================= */
+function hud(){
+  document.getElementById("hScore").textContent = G.score.toLocaleString();
+  document.getElementById("hServed").textContent = G.served;
+  const f = document.getElementById("hFailed"); f.textContent = G.failed;
+  f.className = G.failed>0 ? (G.health<60?"bad":"warn") : "";
+  const s = document.getElementById("slo");
+  s.style.width = G.health+"%";
+  s.style.background = G.health>70 ? "var(--teal)" : G.health>40 ? "var(--amber)" : "var(--red)";
+}
+let toastN = 0;
+function toast(msg, cls="", dur=2800){
+  const box = document.getElementById("toasts");
+  if(toastN>3){ box.firstChild && box.firstChild.remove(); }
+  const t = document.createElement("div"); t.className="toast "+cls; t.textContent=msg;
+  box.appendChild(t); toastN++;
+  requestAnimationFrame(()=>t.classList.add("show"));
+  setTimeout(()=>{ t.classList.remove("show"); setTimeout(()=>{t.remove(); toastN--;}, 350); }, dur);
+}
+function banner(w,t,s){
+  const b = document.getElementById("banner");
+  document.getElementById("bW").textContent=w;
+  document.getElementById("bT").textContent=t;
+  document.getElementById("bS").textContent=s;
+  b.classList.add("show"); setTimeout(()=>b.classList.remove("show"), 3600);
+}
+
+/* ================= game loop ================= */
+const clock = new THREE.Clock();
+function loop(){
+  requestAnimationFrame(loop);
+  const dt = Math.min(clock.getDelta(), .05);
+  // pod lifecycle
+  let topo = false;
+  for(const p of pods){
+    if(p.state==="creating"){ p.t+=dt; if(p.t>2.2){ p.state="ready"; applyPodLook(p); topo=true;
+      toast(`${p.name} → Running 1/1 Ready`, "ok", 1800); } }
+    if(p.state==="crash"){ p.mesh.scale.setScalar(1 + Math.sin(G.t*8)*.07); } else p.mesh.scale.setScalar(1);
+    if(p.state==="pulling"){ p.mesh.material.emissiveIntensity = .35 + Math.sin(G.t*5)*.2; }
+    // saturation tint
+    if(p.state==="ready"){
+      const sat = p.load / TIER[p.tier].cap;
+      p.mesh.material.emissiveIntensity = .35 + sat*.55;
+      p.mesh.material.emissive.setHex(sat>=1 ? C.amber : TIER[p.tier].color);
+    }
+  }
+  if(topo){ schedulePendings(); rebuildBeams(); drawDeploys(); }
+  torus.rotation.z += dt*.6;
+  Object.values(SVC).forEach(s=> s.orb.position.y = 3.6 + Math.sin(G.t*1.8 + s.x)*.1);
+
+  if(G.running && !G.over){
+    G.t += dt; G.waveT += dt;
+    const w = WAVES[G.wave];
+    // spawn
+    const k = Math.min(G.waveT / w.dur, 1);
+    const interval = w.spawn[0] + (w.spawn[1]-w.spawn[0])*k;
+    G.spawnT -= dt;
+    if(G.spawnT<=0){ spawnReq(); G.spawnT = interval * (0.75 + Math.random()*.5); }
+    // events
+    for(const e of w.events) if(!e.done && G.waveT>=e.at){ e.done=true; raiseIncident(e.type); }
+    // wave end
+    if(G.waveT >= w.dur){
+      if(G.wave+1 >= WAVES.length) endGame();
+      else startWave(G.wave+1);
+    }
+    hud();
+  }
+  for(const r of reqPool) if(r.active) updateReq(r, dt);
+  projectLabels();
+  renderer.render(scene, camera);
+}
+
+/* ================= end ================= */
+function endGame(){
+  G.over = true; G.running = false; closePanel();
+  const total = G.served + G.failed, avail = total? (100*G.served/total) : 100;
+  const mttr = G.mttrs.length? G.mttrs.reduce((a,b)=>a+b,0)/G.mttrs.length : 0;
+  const sloMet = avail >= 95;
+  G.score += sloMet ? 500 : 0;
+  const ranks = [[3800,"Platform SRE ☸ — ship it"],[2600,"Production-Ready 🚢"],[1400,"Reconciling 🔄"],[0,"Pod Pending ⏳"]];
+  document.getElementById("endRank").textContent = ranks.find(r=>G.score>=r[0])[1];
+  document.getElementById("endScore").textContent = G.score.toLocaleString();
+  const rows = [
+    ["requests served", G.served],
+    ["requests failed", G.failed],
+    ["availability", avail.toFixed(1)+"%" + (sloMet?" · SLO met +500":" · SLO missed")],
+    ["incidents resolved", G.fixes + " / " + G.incidents.length],
+    ["avg MTTR", G.mttrs.length? mttr.toFixed(0)+"s" : "—"],
+    ["wrong actions", G.wrongs],
+  ];
+  document.getElementById("endStats").innerHTML = rows.map(r=>`<span>${r[0]}</span><b>${r[1]}</b>`).join("");
+  // study tip from failure log / wrongs
+  const tips = {
+    frontend:"Requests died at the frontend hop — capacity and readiness. Re-run Lab 3: scaling, requests vs limits, and what Ready actually gates.",
+    api:"Requests died at the API hop — selectors, endpoints and capacity. Re-run Lab 4: Service → EndpointSlice → Pod, and the empty-endpoints signature.",
+    db:"Requests died at the database — persistence. Re-run Lab 5: the PVC → PV → StorageClass chain and why overlays set storage per environment.",
+  };
+  const worst = Object.entries(G.failLog).sort((a,b)=>b[1]-a[1])[0];
+  let tip = worst ? tips[worst[0]] : "Clean shift — take the 40-question practice exam next; book the KCNA at a steady 80–85%.";
+  if(G.wrongs>2) tip += " And re-read the troubleshooting ladder: evidence before action, Git before kubectl.";
+  document.getElementById("endTip").innerHTML = "<b>Debrief:</b> " + tip;
+  document.getElementById("end").style.display = "flex";
+}
+
+/* ================= boot ================= */
+function reset(){
+  [...pods].forEach(removePod);
+  Object.values(SVC).forEach(s=>s.broken=false);
+  G.incidents.forEach(removeFlag);
+  Object.assign(G, {score:0, served:0, failed:0, health:100, wave:0, waveT:0,
+    running:false, over:false, spawnT:0, incidents:[], failLog:{}, fixes:0, wrongs:0, mttrs:[], t:0});
+  addPod("frontend", true); addPod("frontend", true);
+  addPod("api", true);
+  addPod("db", true);
+  rebuildBeams(); drawDeploys(); hud();
+}
+document.getElementById("start").onclick = ()=>{
+  document.getElementById("intro").style.display="none";
+  G.running = true; startWave(0);
+};
+document.getElementById("replay").onclick = ()=>{
+  document.getElementById("end").style.display="none"; reset();
+  G.running = true; startWave(0);
+};
+reset();
+loop();
+</script>
+</body>
+</html>
