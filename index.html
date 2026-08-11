@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Matt Ward | Enterprise Solution Architect & Technical Presales Specialist</title>
+  <meta name="description" content="Solution Architect and Technical Presales Specialist with over 20 years' experience in hybrid cloud, cyber resilience, and enterprise IT.">
+
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --accent: #38bdf8;
+      --accent-hover: #0284c7;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: #334155;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body { background-color: var(--bg); color: var(--text-main); line-height: 1.6; display: flex; justify-content: center; min-height: 100vh; padding: 2rem 1rem; }
+    .container { max-width: 720px; width: 100%; }
+
+    /* Header, Bio & Avatar */
+    header { margin-bottom: 2rem; }
+    .profile-img {
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      border: 2px solid var(--accent);
+      object-fit: cover;
+      margin-bottom: 1.25rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      display: block;
+    }
+    .status-badge { display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(56, 189, 248, 0.1); color: var(--accent); padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.85rem; font-weight: 500; margin-bottom: 1rem; border: 1px solid rgba(56, 189, 248, 0.2); }
+    .status-dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; display: inline-block; }
+    h1 { font-size: 2.25rem; font-weight: 700; color: var(--text-main); letter-spacing: -0.025em; }
+    .subtitle { font-size: 1.1rem; color: var(--accent); font-weight: 500; margin-bottom: 0.75rem; }
+    .bio { color: var(--text-muted); font-size: 0.975rem; line-height: 1.7; }
+
+    /* Skill Tags */
+    .skills { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1.5rem 0 2.5rem 0; }
+    .skill-tag { background: var(--card-bg); color: var(--text-main); border: 1px solid var(--border); padding: 0.35rem 0.75rem; border-radius: 6px; font-size: 0.85rem; font-weight: 500; }
+
+    /* Hands-On Lab Section (2x2 Grid) */
+    .section-title { font-size: 1.25rem; font-weight: 600; color: var(--text-main); margin-bottom: 1rem; }
+    .hobby-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-bottom: 2.5rem; }
+    .hobby-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem; transition: border-color 0.2s; }
+    .hobby-card:hover { border-color: var(--accent); }
+    .hobby-card h3 { font-size: 1rem; color: var(--accent); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
+    .hobby-card p { font-size: 0.875rem; color: var(--text-muted); line-height: 1.5; }
+
+    /* Contact Card & Form */
+    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; margin-bottom: 2rem; }
+    .card h2 { font-size: 1.25rem; margin-bottom: 1.25rem; color: var(--text-main); }
+    
+    .form-group { margin-bottom: 1.25rem; }
+    label { display: block; font-size: 0.875rem; font-weight: 500; color: var(--text-muted); margin-bottom: 0.35rem; }
+    input, textarea { width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text-main); padding: 0.75rem; border-radius: 6px; font-size: 0.95rem; outline: none; transition: border-color 0.2s; }
+    input:focus, textarea:focus { border-color: var(--accent); }
+    textarea { resize: vertical; min-height: 120px; }
+
+    button { width: 100%; background: var(--accent); color: #0f172a; font-weight: 600; padding: 0.85rem; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; transition: background 0.2s; margin-top: 0.5rem; }
+    button:hover { background: var(--accent-hover); }
+
+    .form-result { margin-top: 1rem; text-align: center; font-weight: 500; font-size: 0.95rem; display: none; }
+
+    /* Footer & Quick Links */
+    footer { text-align: center; color: var(--text-muted); font-size: 0.875rem; }
+    .links { display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 1rem; }
+    .links a { color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
+    .links a:hover { color: var(--accent); }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <!-- Profile Headshot -->
+      <img src="profile.png" alt="Matt Ward" class="profile-img">
+
+      <div class="status-badge">
+        <span class="status-dot"></span> Available for Advisory & Consulting
+      </div>
+      <h1>Matt Ward</h1>
+      <div class="subtitle">Enterprise Solution Architect & Technical Presales Specialist</div>
+      <p class="bio">
+        Solution architect and technical presales practitioner with over 20 years' experience across enterprise environments. I focus on hybrid cloud strategy, cyber resilience, and multi-vendor integration - helping teams translate complex technical capabilities into practical, reliable business outcomes. Grounded in hands-on engineering, I value pragmatic design, clear communication, and straightforward problem-solving.
+      </p>
+
+      <div class="skills">
+        <span class="skill-tag">Solution Architecture</span>
+        <span class="skill-tag">Technical Presales</span>
+        <span class="skill-tag">Hybrid Cloud</span>
+        <span class="skill-tag">Cyber Resilience</span>
+        <span class="skill-tag">Multi-Vendor Integration</span>
+        <span class="skill-tag">Zero Trust Frameworks</span>
+        <span class="skill-tag">Data Strategy</span>
+        <span class="skill-tag">Technical Advisory</span>
+      </div>
+    </header>
+
+    <!-- Hands-On Lab & Experiments Section (2x2 Grid) -->
+    <section>
+      <h2 class="section-title">Beyond the Desk - Hands-On Lab & Experiments</h2>
+      <div class="hobby-grid">
+        
+        <div class="hobby-card">
+          <h3>🌐 Network Design & Resilience</h3>
+          <p>Designing reliable, segmented network topologies featuring high-speed backbones, multi-tier VLAN isolation, Zero Trust access principles, and DNS-level ad mitigation.</p>
+        </div>
+
+        <div class="hobby-card">
+          <h3>🔒 Private Compute & Local Security</h3>
+          <p>Building self-hosted, local-first infrastructure designed for privacy and resilience. Focused on edge compute, physical access systems, and offline-capable telemetry pipelines.</p>
+        </div>
+
+        <div class="hobby-card">
+          <h3>🤖 Edge Compute & Automation</h3>
+          <p>Running containerised microservices, exploring open-source local LLMs, and building self-hosted automation workflows to stay hands-on with emerging technology.</p>
+        </div>
+
+        <div class="hobby-card">
+          <h3>📻 RF Systems & Radio Engineering</h3>
+          <p>Licensed Amateur Radio operator exploring physical-layer principles - including RF spectrum analysis, signal propagation dynamics, custom antenna design, and physical cabling.</p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Contact Form -->
+    <main class="card">
+      <h2>Get in Touch</h2>
+      <form id="contact-form" action="https://api.web3forms.com/submit" method="POST">
+        <!-- Web3Forms Access Key -->
+        <input type="hidden" name="access_key" value="6c36d2f1-d9b1-4b45-ab67-9b2a9a095f49">
+        <input type="hidden" name="subject" value="New Contact Form Submission - mward.co.uk">
+        
+        <!-- Built-in Invisible Honeypot Spam Protection -->
+        <input type="checkbox" name="botcheck" class="hidden" style="display: none;">
+
+        <div class="form-group">
+          <label for="name">Name</label>
+          <input type="text" id="name" name="name" required placeholder="John Smith">
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <input type="email" id="email" name="email" required placeholder="john@example.co.uk">
+        </div>
+
+        <div class="form-group">
+          <label for="message">Message</label>
+          <textarea id="message" name="message" required placeholder="How can I help with your project or technical challenge?"></textarea>
+        </div>
+
+        <button type="submit">Send Message</button>
+        <div id="result" class="form-result"></div>
+      </form>
+    </main>
+
+    <footer>
+      <div class="links">
+        <a href="https://www.linkedin.com/in/mrmattward" target="_blank" rel="noopener">LinkedIn</a>
+        <a href="/.well-known/security.txt">Security</a>
+      </div>
+      <p>&copy; Matt Ward. All rights reserved.</p>
+    </footer>
+  </div>
+
+  <script>
+    const form = document.getElementById('contact-form');
+    const result = document.getElementById('result');
+
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const formData = new FormData(form);
+      const object = Object.fromEntries(formData);
+      const json = JSON.stringify(object);
+
+      result.style.display = "block";
+      result.style.color = "var(--accent)";
+      result.innerHTML = "Sending message...";
+
+      fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: json
+      })
+      .then(async (response) => {
+        let resJson = await response.json();
+        if (response.status == 200) {
+          result.style.color = "#22c55e";
+          result.innerHTML = "Thank you! Your message has been sent successfully.";
+          form.reset();
+        } else {
+          result.style.color = "#ef4444";
+          result.innerHTML = resJson.message || "Something went wrong. Please try again.";
+        }
+      })
+      .catch(error => {
+        result.style.color = "#ef4444";
+        result.innerHTML = "Something went wrong. Please try again.";
+      });
+    });
+  </script>
+</body>
+</html>
