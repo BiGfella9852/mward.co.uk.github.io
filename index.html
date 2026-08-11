@@ -51,6 +51,11 @@
     .hobby-card h3 { font-size: 1rem; color: var(--accent); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
     .hobby-card p { font-size: 0.875rem; color: var(--text-muted); line-height: 1.5; }
 
+    /* Interactive Links Inside Cards */
+    .card-links { display: flex; flex-direction: column; gap: 0.4rem; margin-top: 0.85rem; }
+    .card-links a { display: inline-flex; align-items: center; gap: 0.35rem; color: var(--accent); text-decoration: none; font-size: 0.85rem; font-weight: 500; transition: opacity 0.2s; }
+    .card-links a:hover { opacity: 0.85; text-decoration: underline; }
+
     /* Contact Card & Form */
     .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; margin-bottom: 2rem; }
     .card h2 { font-size: 1.25rem; margin-bottom: 1.25rem; color: var(--text-main); }
@@ -119,9 +124,10 @@
         <div class="hobby-card">
           <h3>🤖 Edge Compute & Automation</h3>
           <p>Running containerised microservices, exploring open-source local LLMs, and building self-hosted automation workflows to stay hands-on with emerging technology.</p>
-          <a href="/commandatlas/" target="_blank" style="display: inline-flex; align-items: center; gap: 0.35rem; color: var(--accent); text-decoration: none; font-size: 0.85rem; font-weight: 500; margin-top: 0.75rem;">
-            ⚡ Interactive Command Atlas (K8s, Docker, Linux, SSH) &rarr;
-          </a>
+          <div class="card-links">
+            <a href="/commandatlas/" target="_blank">⚡ Interactive Command Atlas (K8s, Docker, Linux, SSH) &rarr;</a>
+            <a href="/clustercommand/" target="_blank">🎮 CloudCart: 3D K8s Cluster Ops Game &rarr;</a>
+          </div>
         </div>
 
         <div class="hobby-card">
